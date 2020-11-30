@@ -3,7 +3,7 @@ const debugChildP = debug.extend('cpPython');
 const path = require('path');
 const spawn = require('child_process').spawn;
 const CronJob = require('cron').CronJob;
-const puppeteer = require('puppeteer-core');
+const puppeteer = require('puppeteer');
 const Jimp = require('jimp');
 
 // config variables
@@ -48,38 +48,39 @@ const job = new CronJob({
 
       // wait x seconds to load the complete content of the MagicMirror site
       // change it in config.js "wait_to_load"
-      await page.waitFor(global.gConfig.wait_to_load*1000);
+      await page.waitForTimeout(global.gConfig.wait_to_load*1000);
 
       await page.screenshot({path: fileName});
 
       await browser.close();
-      
+
       // invert colors for the screenshot
       if (global.gConfig.invert_color) {
         // read the screenshot
         const img = await Jimp.read(fileName);
-        
+
         // invert the image
         await img.invert();
-          
+
         //save image
         await img.quality(80).writeAsync(fileName);
       }
 
-      // run the python script to display the screenshots on the eink display
-      const childPython = spawn('python', ['./ePaperPython/main.py']);
+      // run the papertty script to display the screenshots on the eink display
+      // papertty --driver IT8951 image --image rpi-magicmirror-eink/screenshot.png --mirror
+      const papertty = spawn('papertty', ['--driver', 'IT8951', 'image', '--image', 'rpi-magicmirror-eink/screenshot.png' '--mirror']);
 
-      childPython.stdout.on('data', (data) => {
+      papertty.stdout.on('data', (data) => {
         debugChildP(data.toString());
       });
 
-      childPython.stderr.on('data', (err) => {
+      papertty.stderr.on('data', (err) => {
         debugChildP(err.toString());
       });
 
       // if python script was finished
-      childPython.on('close', (code) => {
-        debugChildP(`child process (Python ePaperPython) exited with code ${code} (0=success).`);
+      papertty.on('close', (code) => {
+        debugChildP(`child process (papertty) exited with code ${code} (0=success).`);
         const date = new Date();
         if(code===0) debug('Display refresh END at', date);
       });
@@ -96,5 +97,3 @@ const job = new CronJob({
 });
 
 debug('Script START at', d);
-
-
