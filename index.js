@@ -68,7 +68,7 @@ const job = new CronJob({
 
       // run the papertty script to display the screenshots on the eink display
       // papertty --driver IT8951 image --image rpi-magicmirror-eink/screenshot.png --mirror
-      const papertty = spawn('papertty', ['--driver', 'IT8951', 'image', '--image', 'rpi-magicmirror-eink/screenshot.png' '--mirror']);
+      const papertty = spawn('papertty', ['--driver', 'IT8951', 'image', '--image', 'rpi-magicmirror-eink/screenshot.png', '--mirror']);
 
       papertty.stdout.on('data', (data) => {
         debugChildP(data.toString());
